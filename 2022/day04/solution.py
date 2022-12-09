@@ -25,8 +25,6 @@ def count2(line):
     s22 = int(s2.split('-')[1])
     if ( s12 >= s21 and s11 <= s22 ):
         return 1
-    if ( s12 <= s21 and s11 >= s22 ):
-        return 1
     return 0
 
 for fname in ['input.txt', 'input2.txt']:
