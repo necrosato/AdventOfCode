@@ -2,14 +2,12 @@ import time
 import copy
 import os
 
-
 class Node:
     def __init__(self, name):
         self.name = name
         self.nodes = []
     def __repr__(self):
         return str([n.name for n in self.nodes])
-        #return self.name
 
 def getPaths(graph, src, dst, visited):
     paths = set()
@@ -26,9 +24,7 @@ def getPaths(graph, src, dst, visited):
 
 def getPaths2(graph, src, dst, visited, dupe):
     paths = set()
-    #print('pathing {} to {}'.format(src, dst))
     for node in graph[src].nodes:
-        #print('checking {} to {}'.format(src, node.name))
         if node.name == dst:
             paths.add(os.path.join(src, dst))
         else:
@@ -41,9 +37,7 @@ def getPaths2(graph, src, dst, visited, dupe):
                 v.add(node.name)
                 for path in getPaths2(graph, node.name, dst, v, node.name):
                     paths.add(os.path.join(src, path))
-
     return paths
-
 
 for fname in ['input.txt', 'input2.txt']:
     solution = 0
