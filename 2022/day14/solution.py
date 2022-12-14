@@ -45,6 +45,29 @@ class World:
             return True
         return False
 
+    def __repr__(self):
+        s = ''
+        minx = 500
+        maxx = 500
+        miny = 0
+        maxy = 0
+        for rock in self.rocks.union(self.sands):
+            maxx = max(maxx, rock[0])
+            maxy = max(maxy, rock[1])
+            minx = min(minx, rock[0])
+            miny = min(miny, rock[1])
+        for i in range(maxy-miny+1):
+            for j in range(maxx-minx+1):
+                if (minx+j, miny+i) in self.rocks:
+                    s += '#'
+                elif (minx+j,miny+i) in self.sands:
+                    s += 'o'
+                else:
+                    s += '.'
+            s += '\n'
+        return s
+
+
 def part1(world, source):
     sol = 0
     while True:
@@ -60,6 +83,7 @@ def part2(world, source):
         sand = Sand(source[0], source[1])
         sand.fallUntilFloor(world)
         sol += 1
+    print(world)
     return sol
 
 for fname in ['input', 'input2'] if len(sys.argv) < 2 else sys.argv[1:]:
