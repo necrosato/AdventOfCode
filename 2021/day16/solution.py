@@ -13,95 +13,83 @@ class Packet:
         self.lenTypeBits = None
         self.nextPacketsLength = None
         self.nextPacketsCount = None 
-        self.data = None
+    def operate(self):
+        if self.typeId == 0:
+            return sum([p.operate() for p in self.packets])
+        elif self.typeId == 1:
+            o = 1
+            for i in [p.operate() for p in self.packets]:
+                o *= i
+            return o
+        elif self.typeId == 2:
+            return min([p.operate() for p in self.packets])
+        elif self.typeId == 3:
+            return max([p.operate() for p in self.packets])
+        elif self.typeId == 4:
+            return self.val
+        elif self.typeId == 5:
+            return 1 if self.packets[0].operate() > self.packets[1].operate() else 0
+        elif self.typeId == 6:
+            return 1 if self.packets[0].operate() < self.packets[1].operate() else 0
+        elif self.typeId == 7:
+            return 1 if self.packets[0].operate() == self.packets[1].operate() else 0
 
-def parsePacket(binstr):
+def parsePacket(binstr, versions):
     packet = Packet()
     if len(binstr) < minPacketLength:
         return None
     packet.version = int(binstr[0:3], 2)
     packet.typeId = int(binstr[3:6], 2)
     rest = binstr[6:]
+    plen = 6
     print('\nVersion: {} Type Id: {} bin: {}'.format(packet.version, packet.typeId, binstr))
     if packet.typeId == 4:
-        packet.data = rest
-        groups = [rest[i:i+5] for i in range(0, len(rest), 5)]
-        bn = ''.join([group[1:] for group in groups])
+        i = 0
+        group = []
+        while rest[i] != '0':
+            i+=5
+        data = rest[0:i+5]
+        bn = ''.join([group[1:] for group in [data[j:j+5] for j in range(0, len(data), 5)]])
         packet.val = int(bn, 2)
-        print(packet.val)
+        plen += len(data)
     else:
         packet.lenTypeId = int(rest[0])
         rest = rest[1:]
+        plen += 1
         print('Length type id: {}'.format(packet.lenTypeId))
         if packet.lenTypeId == 0:
             packet.nextPacketsLength = int(rest[0:15], 2)
             print('next packets length {}'.format(packet.nextPacketsLength))
-            rest = rest[15:]
-            packet.data = rest[0:packet.nextPacketsLength]
-            print(packet.data)
+            plen += 15 + packet.nextPacketsLength
+            rest = rest[15:15+packet.nextPacketsLength]
+            i = 0
+            while i <= len(rest) - minPacketLength:
+                subpacket = parsePacket(rest[i:], versions)
+                if subpacket is not None:
+                    packet.packets.append(subpacket[0])
+                    i += subpacket[1]
+                else:
+                    print('found invalid packet: {}'.format(rest[i:]))
+                    break
+            data = rest[0:packet.nextPacketsLength]
         else:
             packet.nextPacketsCount = int(rest[0:11], 2)
             print('next packet count {}'.format(packet.nextPacketsCount))
             rest = rest[11:]
-            subpacketlen = len(rest)//packet.nextPacketsCount # ? 
-            packet.data = [rest[i:i+subpacketlen] for i in range(0, len(rest), subpacketlen)]
-            for pdata in packet.data:
-                subpacket = parsePacket(pdata)
-                if subpacket is None:
-                    return None
-                packet.packets.append(subpacket)
-    print('version {} done parsing\n'.format(packet.version))
-    return packet
-
-
-'''
-packetlengths = {
-    'header':6,
-    'lt': 1,
-    'pl': 15,
-    'pc': 11,
-    'nc': 5
-}
-
-def parsePacket(binstr, versionSet):
-    packet = []
-    if len(binstr) < minPacketLength:
-        return None
-    version = int(binstr[0:3], 2)
-    versionSet.add(version)
-    tid = int(binstr[3:6], 2)
-    rest = binstr[6:]
-    print()
-    print('Version: {} Type Id: {} bin: {}'.format(version, tid, binstr))
-    if tid == 4:
-        groups = [rest[i:i+5] for i in range(0, len(rest), 5)]
-        bn = ''.join([group[1:] for group in groups])
-        n = int(bn, 2)
-        print(n)
-    else:
-        ltid = int(rest[0])
-        rest = rest[1:]
-        print('Length type id: {}'.format(ltid))
-        subpackets = []
-        if ltid == 0:
-            nextPacketsLength = int(rest[0:15], 2)
-            print('next packets length {}'.format(nextPacketsLength))
-            rest = rest[15:]
-            spbin = rest[0:nextPacketsLength]
-
-            print(spbin)
-        else:
-            nextPacketCount = int(rest[0:11], 2)
-            print('next packet count {}'.format(nextPacketCount))
-            rest = rest[11:]
-            subpacketlen = len(rest)//nextPacketCount
-            subpackets = [rest[i:i+subpacketlen] for i in range(0, len(rest), subpacketlen)]
-        print(subpackets)
-        for packet in subpackets:
-            parsePacket(packet, versionSet)
-    print('Version {} done parsing\n'.format(version))
-'''
-
+            i = 0
+            plen += 11
+            for j in range(packet.nextPacketsCount):
+                subpacket = parsePacket(rest[i:], versions)
+                if subpacket is not None:
+                    packet.packets.append(subpacket[0])
+                    i += subpacket[1]
+                    plen += subpacket[1]
+                else:
+                    print('found invalid packet: {}'.format(rest[i:]))
+                    break
+    print('version {} done parsing length {}\n'.format(packet.version, plen))
+    versions.append(packet.version)
+    return (packet, plen)
 
 for fname in sys.argv[1:]:
     solution = 0
@@ -117,9 +105,9 @@ for fname in sys.argv[1:]:
             else:
                 b = int(c)
             binstr += format(b, '#06b')[2:]
-        binstr = binstr[0:-7] + binstr[-7:].rstrip('0')
-        versionSet = set()
-        parsePacket(binstr)
+        versions = [] 
+        packet = parsePacket(binstr, versions)
+        solution = sum(versions)
+        solution2 = packet[0].operate()
         end = time.time()
-        solution = sum(versionSet)
         print('{} solution: {} solution2: {} took {} seconds'.format(fname, solution, solution2, end-start))
