@@ -2,13 +2,11 @@ import itertools
 import heapq
 import time
 import sys
-import copy
 
 def maxValveScore(minutes, src, valvemap, valve_distances, unvisited):
     scores = [valvemap[src].rate*(minutes-1)]
     for dst in unvisited:
-        uvc = copy.deepcopy(unvisited)
-        uvc.remove(dst)
+        uvc = unvisited.difference(set([dst]))
         dt = minutes - valve_distances[src][dst] - ( 1 if valvemap[src].rate > 0 else 0 ) 
         if dt > 0:
             scores.append(maxValveScore(dt, dst, valvemap, valve_distances, uvc) + scores[0])
@@ -27,16 +25,10 @@ def part1( src, valve_distances, valvemap ):
 def part2( src, valve_distances, valvemap ):
     unvisited = getNonZeroValves(valvemap)
     scores = []
-    checked = set()
     for i in range(len(unvisited)//2-1,len(unvisited)//2+1):
         for subset in itertools.combinations(unvisited, i):
-            comp = tuple(unvisited.difference(subset))
-            if subset in checked or comp in checked:
-                continue
-            checked.add(subset)
-            checked.add(comp)
             score = maxValveScore(26, src, valvemap, valve_distances, set(subset))
-            score += maxValveScore(26, src, valvemap, valve_distances, set(comp))
+            score += maxValveScore(26, src, valvemap, valve_distances, set(unvisited.difference(subset)))
             scores.append(score)
     return max(scores)
 
@@ -56,8 +48,6 @@ class Valve:
         self.name = name
         self.rate = rate 
         self.tunnels = tunnels
-    def __repr__(self):
-        return '{} {} {}'.format(self.name, self.rate, self.tunnels)
     def getDist(self, otherName, valvemap):
         heap = [(0, self.name)]
         visited = set()
@@ -71,8 +61,7 @@ for fname in ['input', 'input2'] if len(sys.argv) < 2 else sys.argv[1:]:
         lines = [l.strip() for l in f.readlines()]
         valvemap = {}
         for parts in [line.split() for line in lines]:
-            valve = Valve(parts[1], int(parts[4].split('=')[-1][:-1]), [part.strip(',') for part in parts[9:]])
-            valvemap[valve.name] = valve
+            valvemap[parts[1]] = Valve(parts[1], int(parts[4].split('=')[-1][:-1]), [part.strip(',') for part in parts[9:]])
         valve_distances = {}
         for src in valvemap:
             distances = {}
