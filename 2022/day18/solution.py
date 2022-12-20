@@ -3,8 +3,10 @@ import sys
 
 def getNeighbors(x, y, z):
     return [(x-1, y, z), (x+1, y, z), (x, y-1, z), (x, y+1, z), (x, y, z-1), (x, y, z+1)]
+def inRange(x, y, z, xr, yr, zr):
+    return not ( x < xr[0] or x > xr[1] or y < yr[0] or y > yr[1] or z<zr[0] or z>zr[1] )
 
-def part1( cubes, xr, yr, zr ):
+def part1( cubes, xr, yr, zr, exitCoords=None ):
     surface_area = 0
     for x in range(xr[0], xr[1]+1):
         for y in range(yr[0], yr[1]+1):
@@ -12,30 +14,26 @@ def part1( cubes, xr, yr, zr ):
                 if (x, y, z) in cubes:
                     for neighbor in getNeighbors(x, y, z):
                         if neighbor not in cubes:
-                            surface_area += 1
+                            if exitCoords is None or neighbor in exitCoords or not inRange(*neighbor, xr, yr, zr):
+                                surface_area += 1
     return surface_area
-
-def inRange(x, y, z, xr, yr, zr):
-    return not ( x < xr[0] or x > xr[1] or y < yr[0] or y > yr[1] or z<zr[0] or z>zr[1] )
 
 def addExitCoords(x, y, z, xr, yr, zr, exitCoords, cubes):
     tocheck = set([(x, y, z)])
     checked = set()
-    found = False
     while len(tocheck) > 0:
         i, j, k = next(iter(tocheck))
         tocheck.remove((i, j, k))
         if (i, j, k) not in cubes:
             checked.add((i, j, k))
             if ( not inRange(i, j, k, xr, yr, zr) ) or (i, j, k) in exitCoords:
-                found = True
+                for coords in tocheck.union(checked):
+                    exitCoords.add(coords)
+                return
             else:
                 for neighbor in getNeighbors(i, j, k):
                     if neighbor not in checked:
                         tocheck.add(neighbor)
-    if found:
-        for coords in tocheck.union(checked):
-            exitCoords.add(coords)
 
 def part2( cubes, xr, yr, zr ):
     exitCoords = set()
@@ -43,16 +41,7 @@ def part2( cubes, xr, yr, zr ):
         for y in range(yr[0], yr[1]+1):
             for z in range(zr[0], zr[1]+1):
                 addExitCoords(x, y, z, xr, yr, zr, exitCoords, cubes)
-    surface_area = 0
-    for x in range(xr[0], xr[1]+1):
-        for y in range(yr[0], yr[1]+1):
-            for z in range(zr[0], zr[1]+1):
-                if (x, y, z) in cubes:
-                    for neighbor in getNeighbors(x, y, z):
-                        if neighbor not in cubes:
-                            if neighbor in exitCoords or not inRange(*neighbor, xr, yr, zr):
-                                surface_area += 1
-    return surface_area
+    return part1(cubes, xr, yr, zr, exitCoords)
 
 for fname in ['input', 'input2'] if len(sys.argv) < 2 else sys.argv[1:]:
     with open(fname, 'r') as f:
