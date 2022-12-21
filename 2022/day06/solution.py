@@ -1,5 +1,4 @@
 import time
-import copy
 
 def unique(chars):
     s = set()

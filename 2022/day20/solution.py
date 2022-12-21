@@ -7,6 +7,7 @@ def mix( reference, numbers ):
         n = numbers.pop(source)
         target = (source+n[1]) % len(numbers)
         numbers.insert(target, n)
+        print([n[1] for n in numbers])
     return [n[1] for n in numbers]
  
 def part1( reference ):
