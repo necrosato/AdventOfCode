@@ -1,31 +1,25 @@
-import math
 import time
 import sys
 
-def part1( reference ):
-    reference = [(i, reference[i]) for i in range(len(reference))]
-    numbers = [n for n in reference]
+def mix( reference, numbers ):
     for i in range(len(reference)):
         source = numbers.index(reference[i])
         n = numbers.pop(source)
         target = (source+n[1]) % len(numbers)
         numbers.insert(target, n)
-    numbers = [n[1] for n in numbers]
-    return sum([numbers[(numbers.index(0) + i)%len(numbers)] for i in [1000, 2000, 3000]])
+    return [n[1] for n in numbers]
+ 
+def part1( reference ):
+    reference = [(i, reference[i]) for i in range(len(reference))]
+    mixed = mix(reference, [n for n in reference])
+    return sum([mixed[(mixed.index(0) + i)%len(mixed)] for i in [1000, 2000, 3000]])
 
 def part2( reference ):
-    key = 811589153
-    reference = [(i, reference[i]*key) for i in range(len(reference))]
+    reference = [(i, reference[i]*811589153) for i in range(len(reference))]
     numbers = [n for n in reference]
     for k in range(10):
-        for i in range(len(reference)):
-            source = numbers.index(reference[i])
-            n = numbers.pop(source)
-            target = (source+n[1]) % len(numbers)
-            numbers.insert(target, n)
-    numbers = [n[1] for n in numbers]
-    return sum([numbers[(numbers.index(0) + i)%len(numbers)] for i in [1000, 2000, 3000]])
-
+        mixed = mix(reference, numbers)
+    return sum([mixed[(mixed.index(0) + i)%len(mixed)] for i in [1000, 2000, 3000]])
 
 for fname in ['input', 'input2'] if len(sys.argv) < 2 else sys.argv[1:]:
     with open(fname, 'r') as f:
