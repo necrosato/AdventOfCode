@@ -1,4 +1,3 @@
-import threading
 import time
 import sys
  
@@ -26,15 +25,11 @@ def part2( simulations ):
 
 class Blueprint:
     def __init__(self, name, instructions):
-        self.name = name
         self.id = int(name.split()[1])
-        self.instructions = instructions
         self.ore_bot_cost = int(instructions[0].split()[4])
         self.cla_bot_cost = int(instructions[1].split()[4])
         self.obs_bot_cost = (int(instructions[2].split()[4]), int(instructions[2].split()[7]))
         self.geo_bot_cost = (int(instructions[3].split()[4]), int(instructions[3].split()[7]))
-    def __repr__(self):
-        return self.name + str(self.instructions)
 
 class Simulation:
     def __init__(self, blueprint=None, other=None):
@@ -49,12 +44,9 @@ class Simulation:
         self.minutes = 0 if other is None else other.minutes
         self.blueprint = blueprint if other is None else other.blueprint
 
-    def ores(self):
-        return (self.geo, self.obs, self.cla, self.ore)
-    def bots(self):
-        return (self.geo_bots, self.obs_bots, self.cla_bots, self.ore_bots)
     def state(self):
-        return (self.minutes, self.ores(), self.bots())
+        return (self.minutes, (self.geo, self.obs, self.cla, self.ore), (self.geo_bots, self.obs_bots, self.cla_bots, self.ore_bots))
+
     def optimalGeodes(self, minutes):
         return self.geo + sum([(self.geo_bots + i) for i in range(minutes)])
 
@@ -109,9 +101,6 @@ class Simulation:
         self.obs += self.obs_bots
         self.geo += self.geo_bots
         self.minutes += 1
-
-    def __repr__(self):
-        return 'Simulation id:{}\n\tminutes: {}\n\tore: {}\n\tclay: {}\n\tobsidian: {}\n\tgeodes: {}\n\tore bots: {}\n\tclay bots: {}\n\tobsidian bots: {}\n\tgeode bots: {}\n'.format(self.blueprint.id, self.minutes,self.ore,self.cla,self.obs,self.geo,self.ore_bots,self.cla_bots,self.obs_bots,self.geo_bots)
 
 for fname in ['input', 'input2'] if len(sys.argv) < 2 else sys.argv[1:]:
     with open(fname, 'r') as f:
