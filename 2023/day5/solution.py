@@ -17,8 +17,6 @@ def parseArgs():
         help='an input file path, can passed multiple times to run multiple test files')
     return parser.parse_args()
 
-
-@timer_func
 def split_on_empty_lines(s):
     blank_line_regex = r"(?:\r?\n){2,}"
     return re.split(blank_line_regex, s.strip())
@@ -48,7 +46,6 @@ def part1( seeds, maps ):
                 if index in r:
                     index = m[-1][r][r.index(index)]
                     break
-            print('seed {} {} to {}: {} {}'.format(seed, m[0], m[1], index_old, index))
         if lowloc == None or lowloc > index:
             lowloc = index
     return lowloc
@@ -71,7 +68,6 @@ def part2( seedranges, maps ):
                     ranges_output.append(ir)
             ranges_input = ranges_output
         ranges_input = ranges_mapped + ranges_input
-        print('{} to {}: {}'.format(m[0], m[1], ranges_input))
     return min([r[0] for r in ranges_input])
 
 def main():
