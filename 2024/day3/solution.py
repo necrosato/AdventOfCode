@@ -51,10 +51,6 @@ def part2( grid ):
 
 def main():
     args = parseArgs()
-    '''
-    for this puzzle first run
-    `grep -o "mul([0-9]\+,[0-9]\+)\|do()\|don't()" 2024/day3/input | tee 2024/day3/input_parsed`
-    '''
     for input_file_name in args.input:
         with open(input_file_name, 'r') as f:
             lines = [l.strip() for l in f.readlines()]
