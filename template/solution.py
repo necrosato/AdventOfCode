@@ -1,6 +1,7 @@
 import argparse
 import time
 from collections import deque
+import heapq
 
 '''
 some generic helper functions
@@ -16,6 +17,9 @@ def timer_func(func):
 
 def int_grid(lines):
     return [list(map(int, line.split())) for line in lines]
+
+def coordinate_list(grid):
+    return [(i, j, grid[i][j]) for i in range(len(grid)) for j in range(len(grid[i]))]
  
 def transpose(grid):
     return list(map(list, zip(*grid)))
@@ -61,6 +65,49 @@ def dfs_grid(grid, row, col, visited=None, order=None):
         if neighbor not in visited:
             dfs_grid(grid, neighbor[0], neighbor[1], visited, order)
     return visited, order
+
+def dijkstra(graph, start):
+    distances = {node: float('inf') for node in graph}
+    distances[start] = 0
+    visited = set()
+    pq = [(0, start)]
+    while pq:
+        current_distance, current_node = heapq.heappop(pq)
+        if current_node in visited:
+            continue
+        visited.add(current_node)
+        for neighbor, weight in graph[current_node].items():
+            distance = current_distance + weight
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                heapq.heappush(pq, (distance, neighbor))
+    return distances
+
+def grid_find(val):
+    for i in range(len(grid)):
+        for j in range(len(grid)):
+            if grid[i][j] == val:
+                return (i, j, val)
+
+def dijkstra_grid(grid, start_val):
+    start = find_val(start_val) 
+    distances = {node: float('inf') for node in coordinate_list(grid)}
+    distances[start] = 0
+    visited = set()
+    pq = [(0, start)]
+    while pq:
+        current_distance, current_node = heapq.heappop(pq)
+        if current_node in visited:
+            continue
+        visited.add(current_node)
+        row, col, val = current_node
+        for neighbor in get_neighbors(grid, row, col, value_condition=lambda x:x!='#'):
+            distance = current_distance + 1
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                heapq.heappush(pq, (distance, neighbor))
+    return distances
+
 '''
 end generic helper functions
 '''
