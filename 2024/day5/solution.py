@@ -47,24 +47,6 @@ def part1( grid ):
             valid += update[len(update)//2]
     return valid
 
-def rule_sort(rules, line):
-    firsts = set((rule[0] for rule in rules))
-    lasts = set((rule[1] for rule in rules))
-    temp = list(line)
-    i = 0
-    for first in firsts:
-        if first in temp:
-            temp.remove(first)
-            temp.insert(i,first)
-            i+=1
-    i = 0
-    for last in lasts:
-        if last in temp:
-            temp.remove(last)
-            temp.insert(len(temp)-i, last)
-            i+=1
-    return temp
-
 @timer_func
 def part2( grid ):
     rules = []
