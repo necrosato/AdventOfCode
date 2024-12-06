@@ -83,14 +83,14 @@ def dijkstra(graph, start):
                 heapq.heappush(pq, (distance, neighbor))
     return distances
 
-def grid_find(val):
+def grid_find(grid, val):
     for i in range(len(grid)):
         for j in range(len(grid)):
             if grid[i][j] == val:
                 return (i, j, val)
 
 def dijkstra_grid(grid, start_val):
-    start = find_val(start_val) 
+    start = grid_find(grid, start_val) 
     distances = {node: float('inf') for node in coordinate_list(grid)}
     distances[start] = 0
     visited = set()
