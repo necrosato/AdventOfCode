@@ -19,7 +19,7 @@ def grid_find(grid, val):
     for i in range(len(grid)):
         for j in range(len(grid)):
             if grid[i][j] == val:
-                return (i, j, val)
+                return (i, j)
 '''
 end generic helper functions
 '''
@@ -78,18 +78,18 @@ def part2( grid ):
 
     for i in range(li):
         for j in range(lj):
-            if (i, j) != (start[0], start[1]) and (i, j) in original_seen:
+            if (i, j) != start and (i, j) in original_seen:
                 returned = False
                 grid[i][j] = '#'
                 seen = set()
                 di = 0
-                pos = grid_find(grid, '^')
-                seen.add((pos[0], pos[1], d))
+                pos = start 
+                seen.add((pos[0], pos[1], di))
                 while not returned:
-                    d = dirs[di%4]
+                    d = dirs[di]
                     ni = pos[0]+d[0]
                     nj = pos[1]+d[1]
-                    new = (ni, nj, d)
+                    new = (ni, nj, di)
                     if new in seen:
                         returned = True
                         loopers += 1
@@ -99,7 +99,7 @@ def part2( grid ):
                             if grid[ni][nj] != '#':
                                 pos = new
                             else:
-                                di+=1
+                                di=(di+1)%4
                         else:
                             returned = True
                 grid[i][j] = '.' 
