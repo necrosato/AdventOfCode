@@ -62,6 +62,8 @@ def in_seen(i, j, seen):
 def part2( grid ):
     start = grid_find(grid, '^')
     loopers = 0
+    li = len(grid)
+    lj = len(grid[0])
 
     pos = grid_find(grid, '^')
     di = 0
@@ -72,7 +74,7 @@ def part2( grid ):
         ni = pos[0]+d[0]
         nj = pos[1]+d[1]
         original_seen.add((pos[0], pos[1], d))
-        if ni in range(len(grid)) and nj in range(len(grid[ni])):
+        if ni < li and ni > -1 and nj < lj and nj > -1:
             if grid[ni][nj] != '#':
                 pos = (ni, nj)
             else:
@@ -80,32 +82,33 @@ def part2( grid ):
         else:
             returned = True
 
-    for i in range(len(grid)):
-        for j in range(len(grid[i])):
+    for i in range(li):
+        for j in range(lj):
             if (i, j) != (start[0], start[1]) and in_seen(i, j, original_seen):
                 returned = False
-                temp = grid[i][j]
                 grid[i][j] = '#'
                 seen = set()
                 di = 0
                 pos = grid_find(grid, '^')
+                seen.add((pos[0], pos[1], d))
                 while not returned:
                     d = dirs[di%4]
                     ni = pos[0]+d[0]
                     nj = pos[1]+d[1]
-                    if (ni, nj, d) in seen:
-                        print(i, j)
+                    new = (ni, nj, d)
+                    if new in seen:
                         returned = True
                         loopers += 1
-                    seen.add((pos[0], pos[1], d))
-                    if ni in range(len(grid)) and nj in range(len(grid[ni])):
-                        if grid[ni][nj] != '#':
-                            pos = (ni, nj)
-                        else:
-                            di+=1
                     else:
-                        returned = True
-                grid[i][j] = temp
+                        seen.add(new)
+                        if ni < li and ni > -1 and nj < lj and nj > -1:
+                            if grid[ni][nj] != '#':
+                                pos = new
+                            else:
+                                di+=1
+                        else:
+                            returned = True
+                grid[i][j] = '.' 
     return loopers
 
 def main():
