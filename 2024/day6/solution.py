@@ -52,13 +52,37 @@ def part1( grid ):
             returned = True
     return len(seen)
 
+def in_seen(i, j, seen):
+    for si, sj, d in seen:
+        if i == si and j == sj:
+            return True
+    return False
+
 @timer_func
 def part2( grid ):
     start = grid_find(grid, '^')
     loopers = 0
+
+    pos = grid_find(grid, '^')
+    di = 0
+    original_seen = set()
+    returned = False
+    while not returned:
+        d = dirs[di%4]
+        ni = pos[0]+d[0]
+        nj = pos[1]+d[1]
+        original_seen.add((pos[0], pos[1], d))
+        if ni in range(len(grid)) and nj in range(len(grid[ni])):
+            if grid[ni][nj] != '#':
+                pos = (ni, nj)
+            else:
+                di+=1
+        else:
+            returned = True
+
     for i in range(len(grid)):
         for j in range(len(grid[i])):
-            if (i, j) != (start[0], start[1]):
+            if (i, j) != (start[0], start[1]) and in_seen(i, j, original_seen):
                 returned = False
                 temp = grid[i][j]
                 grid[i][j] = '#'
