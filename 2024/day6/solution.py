@@ -52,12 +52,6 @@ def part1( grid ):
             returned = True
     return len(seen)
 
-def in_seen(i, j, seen):
-    for si, sj, d in seen:
-        if i == si and j == sj:
-            return True
-    return False
-
 @timer_func
 def part2( grid ):
     start = grid_find(grid, '^')
@@ -73,7 +67,7 @@ def part2( grid ):
         d = dirs[di%4]
         ni = pos[0]+d[0]
         nj = pos[1]+d[1]
-        original_seen.add((pos[0], pos[1], d))
+        original_seen.add((pos[0], pos[1]))
         if ni < li and ni > -1 and nj < lj and nj > -1:
             if grid[ni][nj] != '#':
                 pos = (ni, nj)
@@ -84,7 +78,7 @@ def part2( grid ):
 
     for i in range(li):
         for j in range(lj):
-            if (i, j) != (start[0], start[1]) and in_seen(i, j, original_seen):
+            if (i, j) != (start[0], start[1]) and (i, j) in original_seen:
                 returned = False
                 grid[i][j] = '#'
                 seen = set()
