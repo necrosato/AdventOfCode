@@ -27,23 +27,26 @@ def parseArgs():
 
 def build_mem(grid):
     nums = list(map(int,list(grid[0])))
-    files = [nums[i] for i in range(0, len(nums), 2)]
-    frees = [nums[i] for i in range(1, len(nums), 2)]
+    windows = {}
+    free_windows = {}
     mem = ['.'] * sum(nums)
     i = 0
-    f = 0
-    free = False
-    for num in nums:
+    for n in range(len(nums)):
+        free = n%2 != 0
+        num = nums[n]
         if not free:
-            mem[i:i+num] = [f]*num
-            f += 1
+            mem[i:i+num] = [n//2]*num
+            windows[n//2] = (i, i+num)
+        else:
+            if num not in free_windows:
+                free_windows[num] = []
+            free_windows[num].append((i, i+num))
         i += num
-        free = not free 
-    return f, mem
+    return (len(nums)-1)//2, mem, windows, free_windows
 
 @timer_func
 def part1( grid ):
-    f, mem = build_mem(grid)
+    f, mem, windows, free_windows = build_mem(grid)
     start = 0
     end = len(mem)-1
     while end-start > 1: 
@@ -56,48 +59,32 @@ def part1( grid ):
             mem[end] = '.'
     return checksum(mem)
 
-
-def find_free(mem, n):
-    free_start = 0
-    in_free = False
-    for i in range(0, len(mem)):
-        if mem[i] == '.':
-            if not in_free:
-                in_free = True
-                free_start = i
-        elif in_free:
-            if i-free_start >= n:
-                return (free_start, i)
-            in_free = False
-        else:
-            in_free = False
-    return None
-
-def find_num(mem, n):
-    n_start = 0
-    in_n = False
-    for i in range(len(mem)):
-        if mem[i] == n:
-            if not in_n:
-                in_n = True
-                n_start = i
-        elif in_n:
-            return (n_start, i)
-        else:
-            in_n = False
-    if in_n:
-        return (n_start, i+1)
-    return None
+def find_free(windows, n):
+    slot = None
+    for i in range(n, 10):
+        if i in windows and len(windows[i]) > 0:
+            if slot is None or slot[0] > windows[i][0][0]:
+                slot = windows[i][0]
+    if slot:
+        windows[slot[1]-slot[0]].pop(0)
+    return slot
 
 @timer_func
 def part2( grid ):
-    f, mem = build_mem(grid)
-    for i in range(f-1,-1,-1):
-        nc = find_num(mem, i)
-        fc = find_free(mem, nc[1]-nc[0])
+    f, mem, windows, free_windows = build_mem(grid)
+    for i in range(f,-1,-1):
+        nc = windows[i] 
+        fc = find_free(free_windows, nc[1]-nc[0])
         if fc and fc[1] <= nc[0]:
             mem[fc[0]:fc[0]+(nc[1]-nc[0])] = mem[nc[0]:nc[1]]
             mem[nc[0]:nc[1]] = ['.'] * (nc[1]-nc[0])
+            nf = (fc[0]+(nc[1]-nc[0]), fc[1])
+            nfl = nf[1]-nf[0]
+            if nfl > 0:
+                if nfl not in free_windows:
+                    free_windows[nfl] = []
+                free_windows[nfl].append(nf)
+                free_windows[nfl] = sorted(free_windows[nfl])
     return checksum(mem)
 
 def checksum(mem):
