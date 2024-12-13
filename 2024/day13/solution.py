@@ -39,6 +39,7 @@ def cost(buttons):
         return 3*buttons[0]+buttons[1]
     return 0
 
+@timer_func
 def part1( grid ):
     total = 0
     for a, b, p in grid:
