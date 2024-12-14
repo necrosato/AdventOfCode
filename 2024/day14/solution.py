@@ -6,24 +6,31 @@ import heapq
 '''
 some generic helper functions
 '''
-def timer_func(func):
-    def wrap_func(*args, **kwargs):
-        t1 = time.time()
-        result = func(*args, **kwargs)
-        t2 = time.time()
-        print(f'Function {func.__name__!r} executed in {(t2-t1):.4f}s returned {result}')
-        return result
-    return wrap_func
+timings = {}
+def timer_func(silent=False):
+    def decorator(func):
+        def wrap_func(*args, **kwargs):
+            t1 = time.time()
+            result = func(*args, **kwargs)
+            t2 = time.time()
+            duration = t2-t1
+            if not silent:
+                print(f'Function {func.__name__!r} executed in {(duration):.4f}s returned {result}')
+            if func.__name__ not in timings:
+                timings[func.__name__] = 0
+            timings[func.__name__] += duration 
+            return result
+        return wrap_func
+    return decorator
 
-def get_neighbors(grid, row, col, range_val=1, diagonals=False):
-    """Gets neighboring elements within a given range in a grid."""
-    neighbors = []
+def get_neighbors(grid, row, col):
+    neighbors = 0
     rows, cols = len(grid), len(grid[0])
-    for i in range(row - range_val, row + range_val + 1):
-        for j in range(col - range_val, col + range_val + 1):
-            if 0 <= i < rows and 0 <= j < cols and (i != row or j != col):
-                if diagonals or i == row or j == col:
-                    neighbors.append(grid[i][j])
+    for pair in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+        i = row+pair[0]
+        j = col+pair[1]
+        if 0 <= i < rows and 0 <= j < cols:
+            neighbors += grid[i][j]
     return neighbors
 
 '''
@@ -51,7 +58,7 @@ def get_quadrant(x, y, width, height):
     else:
         return None  # Point lies on an axis
 
-@timer_func
+@timer_func()
 def part1( robots ):
     bathroom = (101, 103)    
     steps = 100
@@ -71,41 +78,39 @@ def part1( robots ):
         safety_factor *= quadrants[quadrant]
     return safety_factor
 
-def score(robots, bathroom):
-    tiles = [[0]*bathroom[0] for i in range(bathroom[1])]
+def score(tiles):
     score = 0
-    for p,v in robots:
-        tiles[p[1]][p[0]] += 1
-    for i in range(len(tiles)):
-        for j in range(len(tiles[i])):
+    width = len(tiles)
+    height = len(tiles[0])
+    for i in range(width):
+        for j in range(height):
             if tiles[i][j] > 0:
-                score += sum(get_neighbors(tiles, i, j, diagonals=False))
+                score += get_neighbors(tiles, i, j)
     return score 
 
-def print_bathroom(robots, bathroom):
-    tiles = [[0]*bathroom[0] for i in range(bathroom[1])]
-    for p,v in robots:
-        tiles[p[1]][p[0]] += 1
-    for line in tiles:
-        print(''.join(list(map(str,line))).replace('0','.'))
-
-@timer_func
+@timer_func()
 def part2( robots ):
     bathroom = (101, 103)    
     steps = 0
     max_score = 0
     max_score_steps = 0
+    tiles = [[0]*bathroom[0] for i in range(bathroom[1])]
+    for p,v in robots:
+        tiles[p[1]][p[0]] += 1
     for steps in range(1, 101*103):
         ng = []
         for p,v in robots:
             fp = ((p[0]+v[0]+bathroom[0])%bathroom[0], (p[1]+v[1]+bathroom[1])%bathroom[1])
             ng.append((fp, v))
+            tiles[p[1]][p[0]] -= 1
+            tiles[fp[1]][fp[0]] += 1
         robots = ng
-        ns = score(robots, bathroom)
+        ns = score(tiles)
         if ns > max_score:
             max_score = ns
             max_score_steps = steps
-            print_bathroom(robots, bathroom)
+            for line in tiles:
+                print(''.join(list(map(str,line))).replace('0','.'))
             print('found new max {} at {}'.format(ns, steps))
     return max_score_steps
 
@@ -118,6 +123,8 @@ def main():
             robots = [(tuple(map(int,line[0][2:].split(','))), tuple(map(int,line[1][2:].split(',')))) for line in lines]
             sol1 = part1(robots)
             sol2 = part2(robots)
+            for timing in list(reversed(sorted(timings, key=lambda x:x[1]))):
+                print('function {} took {} seconds total'.format(timing, timings[timing]))
         
 if __name__=='__main__':
     main()

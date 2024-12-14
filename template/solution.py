@@ -15,6 +15,23 @@ def timer_func(func):
         return result
     return wrap_func
 
+timings = {}
+def instrument(silent=False):
+    def decorator(func):
+        def wrap_func(*args, **kwargs):
+            t1 = time.time()
+            result = func(*args, **kwargs)
+            t2 = time.time()
+            duration = t2-t1
+            if not silent:
+                print(f'Function {func.__name__!r} executed in {(duration):.4f}s returned {result}')
+            if func.__name__ not in timings:
+                timings[func.__name__] = 0
+            timings[func.__name__] += duration 
+            return result
+        return wrap_func
+    return decorator
+
 def int_grid(lines):
     return [list(map(int, line.split())) for line in lines]
 
@@ -27,7 +44,17 @@ def transpose(grid):
 def true_func(val):
     return True
 
-def get_neighbors(grid, row, col, range_val=1, diagonals=False, include_value=True, value_condition=lambda x:True):
+def get_neighbors(grid, row, col):
+    neighbors = []
+    rows, cols = len(grid), len(grid[0])
+    for pair in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+        i = row+pair[0]
+        j = col+pair[1]
+        if 0 <= i < rows and 0 <= j < cols:
+            neighbors.append(grid[i][j])
+    return neighbors
+
+def get_neighbors2(grid, row, col, range_val=1, diagonals=False, include_value=True, value_condition=lambda x:True):
     """Gets neighboring elements within a given range in a grid."""
     neighbors = []
     rows, cols = len(grid), len(grid[0])
@@ -139,10 +166,12 @@ def main():
     for input_file_name in args.input:
         with open(input_file_name, 'r') as f:
             lines = [l.strip() for l in f.readlines()]
-            grid = int_grid(lines)
+            grid = lines
             sol1 = part1(grid)
             sol2 = part2(grid)
-        
+            for timing in list(reversed(sorted(timings, key=lambda x:x[1]))):
+                print('function {} took {} seconds total'.format(timing, timings[timing]))
+         
 if __name__=='__main__':
     main()
 
