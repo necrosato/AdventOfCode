@@ -33,12 +33,6 @@ def instrument(silent=False):
         return wrap_func
     return decorator
 
-def find_all(line, val):
-    vals = []
-    for i in range(len(line)):
-        if line[i] == val:
-            vals.append(i)
-    return vals
 '''
 end generic helper functions
 '''
@@ -49,55 +43,42 @@ def parseArgs():
         help='an input file path, can passed multiple times to run multiple test files')
     return parser.parse_args()
 
-pattern = re.compile(r'#+')
-def check_buf(buf, sizes):
-    springs = re.findall(pattern,''.join(buf))
-    return list(map(len,springs)) == sizes
+def place_windows(sizes, row):
+    positions = {0: 1}
+    for i, size in enumerate(sizes):
+        new_positions = {}
+        for k, v in positions.items():
+            for n in range(k, len(row) - (sum(sizes[i:]) + len(sizes[i + 1:])-1)):
+                if '.' not in row[n:n + size]:
+                    if (i == len(sizes) - 1 and '#' not in row[n + size:]) or \
+                       (i < len(sizes) - 1 and row[n + size] != '#'):
+                        if n+size+1 not in new_positions:
+                            new_positions[n+size+1] = 0
+                        new_positions[n + size + 1] += v
+                if row[n] == '#':
+                    break
+        positions = new_positions
+    return sum(positions.values())
 
 @timer_func
 def part1( grid ):
     arrangements = 0
     for line in grid:
-        la = 0
         row, nums = line.split()
         sizes = list(map(int, nums.split(',')))
-        qs = find_all(row, '?')
-        buf = list(row)
-        for q in range(2**len(qs)):
-            qb = bin(q)[2:].zfill(len(qs))
-            assert(len(qb) == len(qs))
-            for i in range(len(qb)):
-                buf[qs[i]] = '.' if qb[i] == '0' else '#'
-            la += check_buf(buf, sizes)
-        arrangements+=la
-        '''
-        windows = []
-        window_start = 0
-        for size in sizes:
-            windows.append([window_start,window_start+size, size])
-            window_start += size+1
-        for i in reversed(range(len(windows))):
-            window = windows[i]
-            while window[1] < len(row)-1:
-                i==len(windows)-1 or windows[i+1][0]-window[1]
-                if window[1] < len(row)-2 and
-                window[0] += 1
-                window[1] += 1
-            while  and windows[i][1]
-        for word in words:
-            if sizes[i] == len(word):
-                pass    
-            else:
-                qs = word.count('?')
-            i+=1
-        assert(i == len(sizes))
-        '''
- 
+        arrangements+=place_windows(sizes, row)
     return arrangements
 
 @timer_func
 def part2( grid ):
-    pass
+    arrangements = 0
+    for line in grid:
+        row, nums = line.split()
+        sizes = list(map(int, nums.split(',')))
+        row = '?'.join([row for i in range(5)])
+        sizes = sizes*5
+        arrangements+=place_windows(sizes, row)
+    return arrangements
 
 def main():
     args = parseArgs()
