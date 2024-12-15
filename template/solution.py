@@ -32,6 +32,9 @@ def instrument(silent=False):
         return wrap_func
     return decorator
 
+def vector_add(v1, v2):
+    return tuple(x + y for x, y in zip(v1, v2))
+
 def int_grid(lines):
     return [list(map(int, line.split())) for line in lines]
 
@@ -112,14 +115,14 @@ def dijkstra(graph, start):
 
 def grid_find(grid, val):
     for i in range(len(grid)):
-        for j in range(len(grid)):
+        for j in range(len(grid[i])):
             if grid[i][j] == val:
                 return (i, j, val)
 
 def grid_find_all(grid, val):
     vals = []
     for i in range(len(grid)):
-        for j in range(len(grid[0])):
+        for j in range(len(grid[i])):
             if grid[i][j] == val:
                 vals.append((i, j, val))
     return vals
