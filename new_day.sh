@@ -4,3 +4,4 @@ ndp=$dir/$1/day$2
 mkdir -p $ndp
 cp $dir/template/* $ndp
 curl --cookie "session=$(cat $dir/cookie)" https://adventofcode.com/$1/day/$2/input | tee $ndp/input
+vim -p $1/day$2/*
