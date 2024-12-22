@@ -15,23 +15,6 @@ def timer_func(func):
         return result
     return wrap_func
 
-timings = {}
-def instrument(silent=False):
-    def decorator(func):
-        def wrap_func(*args, **kwargs):
-            t1 = time.time()
-            result = func(*args, **kwargs)
-            t2 = time.time()
-            duration = t2-t1
-            if not silent:
-                print(f'Function {func.__name__!r} executed in {(duration):.4f}s returned {result}')
-            if func.__name__ not in timings:
-                timings[func.__name__] = 0
-            timings[func.__name__] += duration 
-            return result
-        return wrap_func
-    return decorator
-
 def vector_sub(v1, v2):
     return tuple(y - x for x, y in zip(v1, v2))
 
@@ -138,55 +121,35 @@ class Keypad:
     def __init__(self, grid):
         self.grid = grid
         self.dists, self.paths, self.dirpaths = floyd_warshall_all_paths(grid)
-    def presses(self, start, seq):
-        ''' presses if this keypad is controlled by a robot arm to get this keypad through the sequence from the start '''
-        arm = start
-        options = [[]] 
-        for key in seq:
-            next_options = []
-            for path in self.dirpaths[arm][key]:
-                for o in options:
-                    next_options.append(o+path)
-            options = next_options
-            arm = key
-        return options
+
+memo = {}
+def minimum_path_length(i, code, keypads):
+    if i == len(keypads)-1:
+        return len(code)
+    keypad = keypads[i]
+    total = 0
+    memokey = (i, ''.join(map(str,code)), len(keypads))
+    if memokey in memo:
+        return memo[memokey]
+    for start, end in zip(['A']+code, code):
+        lens = [minimum_path_length(i+1, path, keypads) for path in keypad.dirpaths[start][end]]
+        total += 1 if not lens else min(lens)
+    memo[memokey] = total
+    return total
 
 def complexity(dpad_num, grid):
     keypads = [Keypad(numpad)]
     for i in range(dpad_num):
         keypads.append(Keypad(dpad))
-    complexity = 0
-    for code in grid:
-        seqs = [code]
-        for keypad in keypads:
-            next_seqs = []
-            for seq in seqs:
-                next_seqs += keypad.presses('A', seq)
-            minlen = min(map(len, next_seqs))
-            seqs = []
-            for seq in next_seqs:
-                sandwich = False
-                for i in range(len(seq)-3):
-                    window = seq[i:i+3]
-                    sandwich |= window[0] == window[2] and window[0] != window[1] and window[0] != 'A' and window[1] != 'A'
-                    if sandwich:
-                        break
-                if len(seq) == minlen and not sandwich:
-                    seqs.append(seq)
-            print(code,minlen, len(seqs))
-
-        seqlen = min(map(len, seqs))
-        cn = int(''.join(map(str,code[:-1])))
-        complexity += seqlen*cn
-    return complexity
+    return sum([minimum_path_length(0, code, keypads)*int(''.join(map(str,code[:-1]))) for code in grid])
 
 @timer_func
 def part1( grid ):
-    return complexity(2,grid)
+    return complexity(3,grid)
 
 @timer_func
 def part2( grid ):
-    return complexity(25,grid)
+    return complexity(26,grid)
 
 def main():
     args = parseArgs()
@@ -195,8 +158,6 @@ def main():
             grid = int_grid([l.strip() for l in f.readlines()])
             sol1 = part1(grid)
             sol2 = part2(grid)
-            for timing in list(reversed(sorted(timings, key=lambda x:x[1]))):
-                print('function {} took {} seconds total'.format(timing, timings[timing]))
          
 if __name__=='__main__':
     main()

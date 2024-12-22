@@ -24,12 +24,10 @@ def parseArgs():
         help='an input file path, can passed multiple times to run multiple test files')
     return parser.parse_args()
 
-def prune(n, m=16777216):
-    return n%m
-def evolve(n):
-    s1 = prune(n^(n*64))
-    s2 = prune(s1^(s1//32))
-    s3 = prune(s2^(s2*2048))
+def evolve(n, m=16777216):
+    s1 = (n^(n*64))%m
+    s2 = (s1^(s1//32))%m
+    s3 = (s2^(s2*2048))%m
     return (s3, s3%10, (s3%10)-(n%10))
 
 @timer_func
@@ -44,21 +42,20 @@ def part1( ints ):
 
 @timer_func
 def part2( ints ):
-    total = 0
     totals = {}
     for i in ints:
-        seen = set()
         n = i
+        seen = set()
         track = []
         for c in range(2000):
             track.append(evolve(n))
+            n = track[-1][0]
             seq = tuple(t[2] for t in track[-4:])
             if c >= 3 and seq not in seen:
                 if seq not in totals:
                     totals[seq] = 0
                 totals[seq]+=track[-1][1]
                 seen.add(seq)
-            n = track[-1][0]
     return max(totals.values())
 
 def main():
