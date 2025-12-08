@@ -33,117 +33,6 @@ def instrument(silent=False):
         return wrap_func
     return decorator
 
-def vector_add(v1, v2):
-    return tuple(x + y for x, y in zip(v1, v2))
-
-def int_grid(lines):
-    return [list(map(int, line.split())) for line in lines]
-
-def coordinate_list(grid):
-    return [(i, j, grid[i][j]) for i in range(len(grid)) for j in range(len(grid[i]))]
- 
-def transpose(grid):
-    return list(map(list, zip(*grid)))
-
-def get_neighbors(grid, row, col):
-    neighbors = []
-    rows, cols = len(grid), len(grid[0])
-    for pair in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-        i = row+pair[0]
-        j = col+pair[1]
-        if 0 <= i < rows and 0 <= j < cols:
-            neighbors.append(grid[i][j])
-    return neighbors
-
-def get_neighbors2(grid, row, col, range_val=1, diagonals=False, include_value=True, value_condition=lambda x:True):
-    """Gets neighboring elements within a given range in a grid."""
-    neighbors = []
-    rows, cols = len(grid), len(grid[0])
-    for i in range(row - range_val, row + range_val + 1):
-        for j in range(col - range_val, col + range_val + 1):
-            if 0 <= i < rows and 0 <= j < cols and (i != row or j != col):
-                if diagonals or i == row or j == col:
-                    if value_condition(grid[i][j]):
-                        neighbors.append((i,j,grid[i][j]) if include_value else (i,j)) 
-    return neighbors
-
-def bfs_grid(grid, row, col):
-    visited = set()
-    order = []
-    queue = deque([(row, col, grid[row][col])])
-    result = []
-    while queue:
-        node = queue.popleft()
-        if node not in visited:
-            visited.add(node)
-            order.append(node)
-            result.append(node)
-            queue.extend(get_neighbors(grid, node[0], node[1]))
-    return result, order
-
-def dfs_grid(grid, row, col, visited=None, order=None):
-    if visited==None:
-        visited=set()
-    if order==None:
-        order=[]
-    node = (row, col, grid[row][col])
-    visited.add(node)
-    order.append(node)
-    for neighbor in get_neighbors(grid, row, col):
-        if neighbor not in visited:
-            dfs_grid(grid, neighbor[0], neighbor[1], visited, order)
-    return visited, order
-
-def dijkstra(graph, start):
-    distances = {node: float('inf') for node in graph}
-    distances[start] = 0
-    visited = set()
-    pq = [(0, start)]
-    while pq:
-        current_distance, current_node = heapq.heappop(pq)
-        if current_node in visited:
-            continue
-        visited.add(current_node)
-        for neighbor, weight in graph[current_node].items():
-            distance = current_distance + weight
-            if distance < distances[neighbor]:
-                distances[neighbor] = distance
-                heapq.heappush(pq, (distance, neighbor))
-    return distances
-
-def grid_find(grid, val):
-    for i in range(len(grid)):
-        for j in range(len(grid[i])):
-            if grid[i][j] == val:
-                return (i, j, val)
-
-def grid_find_all(grid, val):
-    vals = []
-    for i in range(len(grid)):
-        for j in range(len(grid[i])):
-            if grid[i][j] == val:
-                vals.append((i, j, val))
-    return vals
-
-def dijkstra_grid(grid, start_val):
-    start = grid_find(grid, start_val) 
-    distances = {node: float('inf') for node in coordinate_list(grid)}
-    distances[start] = 0
-    visited = set()
-    pq = [(0, start)]
-    while pq:
-        current_distance, current_node = heapq.heappop(pq)
-        if current_node in visited:
-            continue
-        visited.add(current_node)
-        row, col, val = current_node
-        for neighbor in get_neighbors(grid, row, col, value_condition=lambda x:x!='#'):
-            distance = current_distance + 1
-            if distance < distances[neighbor]:
-                distances[neighbor] = distance
-                heapq.heappush(pq, (distance, neighbor))
-    return distances
-
 '''
 end generic helper functions
 '''
@@ -167,90 +56,58 @@ def dists(grid):
  
 @timer_func
 def part1( grid ):
-    circuits = []
+    circuits = list(map(set,[[l] for l in grid]))
     connections = {}
     ds = dists(grid)
     i = 0
     for d in sorted(ds):
         for l1,l2 in ds[d]:
             if (l1 not in connections or l2 not in connections) or (l1 not in connections[l2] and l2 not in connections[l1]):
-                mdl1 = l1
-                mdl2 = l2
-                if mdl1 not in connections:
-                    connections[mdl1] = set()
-                if mdl2 not in connections:
-                    connections[mdl2] = set()
-                connections[mdl1].add(mdl2)
-                connections[mdl2].add(mdl1)
+                if l1 not in connections:
+                    connections[l1] = set()
+                if l2 not in connections:
+                    connections[l2] = set()
+                connections[l1].add(l2)
+                connections[l2].add(l1)
 
-                tmp = []
-                to_merge = []
-                for circuit in circuits:
-                    if mdl1 in circuit or mdl2 in circuit:
-                        circuit.add(mdl1)
-                        circuit.add(mdl2)
-                        to_merge.append(circuit)
+                circuit = set([l1,l2])
+                tmp = [circuit]
+                for c in circuits:
+                    if l1 in c or l2 in c:
+                        circuit.update(c)
                     else:
-                        tmp.append(circuit)
-                circuit = set()
-                circuit.add(mdl1)
-                circuit.add(mdl2)
-                for c in to_merge:
-                    circuit.update(c)
-                tmp.append(circuit)
+                        tmp.append(c)
                 circuits = tmp
                 i += 1
-            if i == len(grid)//2:
-                break
-        if i == len(grid)//2:
-            break
-    lengths = list(sorted(list(map(len,circuits))))[-3:]
-    return lengths[0]*lengths[1]*lengths[2]
+            if i == len(grid):
+                lengths = list(sorted(list(map(len,circuits))))[-3:]
+                return lengths[0]*lengths[1]*lengths[2]
 
 @timer_func
 def part2( grid ):
-    circuits = []
-    for l in grid:
-        circuit = set()
-        circuit.add(l)
-        circuits.append(circuit)
+    circuits = list(map(set,[[l] for l in grid]))
     connections = {}
     ds = dists(grid)
-    i = 0
     for d in sorted(ds):
         for l1,l2 in ds[d]:
             if (l1 not in connections or l2 not in connections) or (l1 not in connections[l2] and l2 not in connections[l1]):
-                mdl1 = l1
-                mdl2 = l2
-                if mdl1 not in connections:
-                    connections[mdl1] = set()
-                if mdl2 not in connections:
-                    connections[mdl2] = set()
-                connections[mdl1].add(mdl2)
-                connections[mdl2].add(mdl1)
+                if l1 not in connections:
+                    connections[l1] = set()
+                if l2 not in connections:
+                    connections[l2] = set()
+                connections[l1].add(l2)
+                connections[l2].add(l1)
 
-                tmp = []
-                to_merge = []
-                for circuit in circuits:
-                    if mdl1 in circuit or mdl2 in circuit:
-                        circuit.add(mdl1)
-                        circuit.add(mdl2)
-                        to_merge.append(circuit)
+                circuit = set([l1,l2])
+                tmp = [circuit]
+                for c in circuits:
+                    if l1 in c or l2 in c:
+                        circuit.update(c)
                     else:
-                        tmp.append(circuit)
-                circuit = set()
-                circuit.add(mdl1)
-                circuit.add(mdl2)
-                for c in to_merge:
-                    circuit.update(c)
-                tmp.append(circuit)
+                        tmp.append(c)
                 circuits = tmp
-                i += 1
             if len(circuits) == 1:
-                break
-        if len(circuits) == 1:
-            break
-    return mdl1[0]*mdl2[0]
+                return l1[0]*l2[0]
 
 def main():
     args = parseArgs()
