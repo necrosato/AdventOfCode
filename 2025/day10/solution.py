@@ -2,7 +2,6 @@ import argparse
 import time
 from collections import deque
 import heapq
-import copy
 
 '''
 some generic helper functions
@@ -38,14 +37,12 @@ def vector_add(v1, v2):
 
 def int_grid(lines):
     return [list(map(int, line.split())) for line in lines]
+
 def coordinate_list(grid):
     return [(i, j, grid[i][j]) for i in range(len(grid)) for j in range(len(grid[i]))]
  
 def transpose(grid):
     return list(map(list, zip(*grid)))
-
-def true_func(val):
-    return True
 
 def get_neighbors(grid, row, col):
     neighbors = []
@@ -156,62 +153,9 @@ def parseArgs():
         help='an input file path, can passed multiple times to run multiple test files')
     return parser.parse_args()
 
-def in_range(grid, coords):
-    return coords[0] in range(len(grid)) and coords[1] in range(len(grid[0]))
-
-dirs =[(-1, 0),(0, 1),(1, 0),(0, -1)]
-def splitv(beam, op):
-    if beam[1][0] == 0: 
-        return [(vector_add(beam[0], beam[1]), (-1, 0)), (beam[0], (1, 0))]
-    return [(vector_add(beam[0], beam[1]), beam[1])]
-def splith(beam, op):
-    if beam[1][1] == 0: 
-        return [(vector_add(beam[0], beam[1]), (0, -1)), (beam[0], (0, 1))]
-    return [(vector_add(beam[0], beam[1]), beam[1])]
-def rotate(beam, op):
-    for i, d in enumerate(dirs):
-        if beam[1] == d:
-            if op == '/':
-                if beam[1][1] == 0:
-                    return [(beam[0], dirs[(i+1)%len(d)])]
-                return [(beam[0], dirs[(i-1)%len(d)])]
-            elif op == '\\':
-                if beam[1][1] == 0:
-                    return [(beam[0], dirs[(i-1)%len(d)])]
-                return [(beam[0], dirs[(i+1)%len(d)])]
-def move(beam, op):
-    return [(vector_add(beam[0], beam[1]), beam[1])]
-
-actions = {
-        '|':splitv,
-        '/':splith,
-        '\\':rotate,
-        '-':rotate,
-        '.': move
-        }
-        
 @timer_func
 def part1( grid ):
-    beams = [((0, 0), (0, 1))]
-    energized = set()
-    t = 0
-    grid2 = copy.deepcopy(grid)
-    print('\n'.join([''.join(l) for l in grid2]))
-    while beams:
-        #print(beams)
-        temp = []
-        for i, beam in enumerate(beams):
-            if in_range(grid, beam):
-                energized.add(beam[0])
-                grid2[beam[0][0]][beam[0][1]] = '#'
-                npc = grid[np[0]][np[1]]
-                temp += actions[npc](beam, npc)
-                print(beam, npc, temp)
-        beams = temp
-        t+=1
-            
-    print('\n'.join([''.join(l) for l in grid2]))
-    return len(energized)
+    pass
 
 @timer_func
 def part2( grid ):
@@ -221,7 +165,8 @@ def main():
     args = parseArgs()
     for input_file_name in args.input:
         with open(input_file_name, 'r') as f:
-            grid = [list(l.strip()) for l in f.readlines()]
+            lines = [l.strip() for l in f.readlines()]
+            grid = lines
             sol1 = part1(grid)
             sol2 = part2(grid)
             for timing in list(reversed(sorted(timings, key=lambda x:x[1]))):
